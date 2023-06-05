@@ -135,4 +135,4 @@ async def client_session_error_handler(_, e: ClientSessionNotInitialized):
     return JSONResponse({"error": "Internal Error"}, status_code=500)
 
 if __name__ == "__main__":
-    uvicorn.run(app, host=config["HOST"], port=config["PORT"], log_level="info")
+    uvicorn.run(app, host="0.0.0.0", port=config["PORT"], log_level="info")
