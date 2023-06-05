@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import uvicorn
 
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse, RedirectResponse, PlainTextResponse
+from fastapi.responses import JSONResponse, RedirectResponse, PlainTextResponse, HTMLResponse
 from fastapi.requests import Request
 from fastapi_discord import DiscordOAuthClient, RateLimited, Unauthorized, User, Guild
 from fastapi_discord.exceptions import ClientSessionNotInitialized
@@ -102,7 +102,22 @@ async def login(request: Request):
             err_resp.delete_cookie("_auth_token")
             return err_resp
 
-    return RedirectResponse(discord.oauth_login_url)
+    return PlainTextResponse("you dont have permission to be located here!", status_code=401)
+
+@app.get("/_oauth2/login")
+async def login_redirect(request: Request):
+    html_content = f"""
+    <html>
+        <head>
+            <title>DISCORD AUTHORIZATION</title>
+            <meta http-equiv="refresh" content="0; url={discord.oauth_login_url}" />
+        </head>
+        <body>
+            <h1>You'll be redirect in few seconds</h1>
+        </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content, status_code=200)
 
 
 @app.get("/_oauth2/callback")
