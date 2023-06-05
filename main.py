@@ -64,6 +64,17 @@ async def discord_guilds(token: str):
 async def discord_full_guild_info(token: str):
     return await discord.request(f"/users/@me/guilds/{config['GUILD_ID']}/member", token)
 
+def simple_http_content(title: str, redirect_url: string):
+    return f"""
+    <html>
+        <head>
+            <title>{title}</title>
+            <meta http-equiv="refresh" content="0; url={redirect_url}" />
+        </head>
+        <body>
+            <p>You'll be redirect in few seconds</p>
+        </body>
+    </html>"""
 
 @app.on_event("startup")
 async def on_startup():
@@ -96,7 +107,7 @@ async def login(request: Request):
     if '_auth_token' in request.cookies:
         validated = await validate_user(request.cookies.get("_auth_token", ""))
         if validated:
-            return PlainTextResponse("ok", status_code=200)
+            return HTMLResponse(simple_http_content("ok", "/"), status_code=200)
         else:
             err_resp = PlainTextResponse("you dont have access, ask for permission!", status_code=401)
             err_resp.delete_cookie("_auth_token")
@@ -104,20 +115,10 @@ async def login(request: Request):
 
     return PlainTextResponse("you dont have permission to be located here!", status_code=401)
 
+
 @app.get("/_oauth2/login")
 async def login_redirect(request: Request):
-    html_content = f"""
-    <html>
-        <head>
-            <title>DISCORD AUTHORIZATION</title>
-            <meta http-equiv="refresh" content="0; url={discord.oauth_login_url}" />
-        </head>
-        <body>
-            <h1>You'll be redirect in few seconds</h1>
-        </body>
-    </html>
-    """
-    return HTMLResponse(content=html_content, status_code=200)
+    return HTMLResponse(content=simple_http_content("discord authorization", discord.oauth_login_url), status_code=200)
 
 
 @app.get("/_oauth2/callback")
