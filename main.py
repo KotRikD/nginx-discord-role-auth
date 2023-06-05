@@ -64,7 +64,7 @@ async def discord_guilds(token: str):
 async def discord_full_guild_info(token: str):
     return await discord.request(f"/users/@me/guilds/{config['GUILD_ID']}/member", token)
 
-def simple_http_content(title: str, redirect_url: string):
+def simple_http_content(title: str, redirect_url: str):
     return f"""
     <html>
         <head>
