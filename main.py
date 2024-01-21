@@ -31,7 +31,7 @@ discord = DiscordOAuthClient(
     config["CLIENT_ID"], 
     config["CLIENT_SECRET"], 
     config["CLIENT_REDIRECT_URI"], 
-    ("identify", "guilds", "guilds.members.read", "email")
+    ("identify", "guilds", "guilds.members.read")
 )  # scopes
 
 # авторизуем чувака
