@@ -3,6 +3,8 @@ import time
 from typing import Union
 from dotenv import load_dotenv
 
+from cachetools import TTLCache
+
 import uvicorn
 
 from fastapi import FastAPI
@@ -33,6 +35,8 @@ discord = DiscordOAuthClient(
     config["CLIENT_REDIRECT_URI"], 
     ("identify", "guilds", "guilds.members.read")
 )  # scopes
+
+validation_cache = TTLCache(maxsize=100, ttl=10)
 
 # авторизуем чувака
 # ставим jwt token с access_token дискорда и expire 86400 (1 день)
@@ -85,6 +89,10 @@ async def validate_user(token: str):
     data = decodeJWT(token)
     if not data:
         return False
+    
+    cached = validation_cache.get(data["discord_token"])
+    if cached != None and cached == "ok":
+        return True
 
     user_guilds = await discord_guilds(data["discord_token"])
     needed_guild = None
@@ -100,20 +108,21 @@ async def validate_user(token: str):
     if "roles" in full_guild_member_info and config["ROLE_ID"] not in full_guild_member_info["roles"]:
         return False
 
+    cached[data["discord_token"]] = "ok"
     return True
 
 @app.get("/_oauth2/check")
 async def login(request: Request):
-    if '_auth_token' in request.cookies:
-        validated = await validate_user(request.cookies.get("_auth_token", ""))
-        if validated:
-            return HTMLResponse(simple_http_content("ok", "/"), status_code=200)
-        else:
-            err_resp = PlainTextResponse("you dont have access, ask for permission!", status_code=401)
-            err_resp.delete_cookie("_auth_token")
-            return err_resp
+    if '_auth_token' not in request.cookies:
+        return PlainTextResponse("you dont have permission to be located here!", status_code=401)
 
-    return PlainTextResponse("you dont have permission to be located here!", status_code=401)
+    validated = await validate_user(request.cookies.get("_auth_token", ""))
+    if validated:
+        return HTMLResponse(simple_http_content("ok", "/"), status_code=200)
+
+    err_resp = PlainTextResponse("you dont have access, ask for permission!", status_code=401)
+    err_resp.delete_cookie("_auth_token")
+    return err_resp
 
 
 @app.get("/_oauth2/login")
