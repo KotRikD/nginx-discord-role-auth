@@ -108,7 +108,7 @@ async def validate_user(token: str):
     if "roles" in full_guild_member_info and config["ROLE_ID"] not in full_guild_member_info["roles"]:
         return False
 
-    cached[data["discord_token"]] = "ok"
+    validation_cache[data["discord_token"]] = "ok"
     return True
 
 @app.get("/_oauth2/check")
